@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import starfieldBlackbody from "./starfieldBlackbody.glsl.js";
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const NEAR = 0.000001, FAR = 1e27, CUBE_ASPECT = 1, FOV = 75, FOV_MAX = 100, FOV_MIN = 25;
+const NEAR = 0.000001, FAR = 1e27, CUBE_ASPECT = 1, FOV = 50, FOV_MAX = 100, FOV_MIN = 25, MAX_POINTS = 500;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
@@ -22,9 +21,10 @@ let _stars = []
 let _starnames = {}
 let _selected = [];
 
-let _showStarsNames = false;
+let drawCount;
+let line;
 
-camera.position.set(0, 0, 100);
+camera.position.set(0, 0, 1);
 camera.lookAt(0, 0, 0);
 
 camera.layers.disableAll()
@@ -50,6 +50,19 @@ controls.enableZoom = false;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+
+// line
+function setupLines() {
+    // line
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setDrawRange(0, 0);
+    const material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+    line = new THREE.Line(geometry, material);
+    // line.layers.set(1)
+    scene.add(line);
+}
 
 console.log("top", container.getBoundingClientRect());
 
@@ -99,10 +112,16 @@ window.addEventListener('click', (e) => {
 
 
 function addStar(index) {
+    if (_selected.length < 3) {
+        document.getElementById("draw-constellation").disabled = true;
+    } else {
+        document.getElementById("draw-constellation").disabled = false;
+    }
     const parent = document.getElementById('stars');
     if (_selected.length == 1) {
         parent.innerText = '';
     }
+
     const star_element = document.createElement("span");
     const star = _stars[index];
     const star_name = _starnames[star.n];
@@ -124,10 +143,11 @@ function centerOnSelection(event) {
     controls.update();
 }
 
-document.getElementById("selection-reset").addEventListener("click", resetSelection);
+document.getElementById("selection-reset").addEventListener("click", clearSelection);
 
-function resetSelection(event) {
+function clearSelection(event) {
     _selected = [];
+    document.getElementById("draw-constellation").disabled = true;
     document.getElementById('stars').textContent = 'Click on star to add to selection';
     event.stopPropagation();
 }
@@ -204,7 +224,43 @@ function onDocumentMouseWheel(event) {
 //     }
 // }
 
+
+document.getElementById("draw-constellation").addEventListener("click", drawConstellation);
+
+function drawConstellation(event) {
+    camera.layers.enable(1);
+    event.stopPropagation();
+    if (_selected.length < 3) {
+        console.debug("Not enough lines to draw constellation")
+    }
+
+    line.material.color.setHSL(Math.random(), 1, 0.5);
+
+
+    const positions = line.geometry.attributes.position.array;
+
+    let index = 0;
+
+    for (let i = 0; i < _selected.length; i++) {
+        const star = _stars[_selected[i]];
+        positions[index++] = star.x;
+        positions[index++] = star.y;
+        positions[index++] = star.z;
+    }
+    const star = _stars[_selected[0]];
+    positions[index++] = star.x;
+    positions[index++] = star.y;
+    positions[index++] = star.z;
+    line.geometry.setDrawRange(0, _selected.length + 1);
+    line.geometry.attributes.position.needsUpdate = true;
+}
+
+function drawLine(next, first) {
+
+}
+
 function render() {
+    line.geometry.attributes.position.needsUpdate = true;
     raycaster.setFromCamera(pointer, camera);
     controls.update();
     renderer.render(scene, camera);
@@ -320,6 +376,8 @@ function renderStars(stars) {
 }
 
 renderer.setAnimationLoop(render);
+
+setupLines()
 
 configureZoomButtons();
 
