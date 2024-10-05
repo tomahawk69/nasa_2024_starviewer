@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>My first three.js app</title>
-		<style>
-			body { margin: 0; }
-		</style>
-        <script type="importmap">
-            {
-              "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@v0.169.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.169.0/examples/jsm/"
-              }
-            }
-          </script>
-	</head>
-	<body>
-		<script type="module" src="/main.js"></script>
-	</body>
+
+<head>
+	<meta charset="utf-8">
+	<title>Exosky by Night Dreamers</title>
+	<link rel="stylesheet" href="app.css">
+</head>
+<script type="importmap">
+		{
+		  "imports": {
+			"three": "https://cdn.jsdelivr.net/npm/three@v0.169.0/build/three.module.js",
+			"three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.169.0/examples/jsm/"
+		  }
+		}
+	  </script>
+
+<body>
+	<div id="container">
+		<div id="top">
+			<button id="camera-reset">Reset camera</button>
+			<button id="selection-reset">Clear selection</button>
+			<button id="camera-zoom-in">+</button>
+			<button id="camera-zoom-out">-</button>
+			<span id="zoom">1x</span>
+			<span id="stars">Click on star to add to selection</span>
+		</div>
+		<div id="canvas"></div>
+	</div>
+</body>
+
+<script type="module" src="/main.js"></script>
+
 </html>
