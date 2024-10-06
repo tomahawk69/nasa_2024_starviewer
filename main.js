@@ -21,8 +21,9 @@ let _stars = []
 let _starnames = {}
 let _selected = [];
 
-let drawCount;
 let line;
+
+let _drawMode = false;
 
 camera.position.set(0, 0, 1);
 camera.lookAt(0, 0, 0);
@@ -48,6 +49,8 @@ controls.autoRotate = false;
 controls.enablePan = false;
 controls.enableZoom = false;
 
+// controls.maxPolarAngle = -Math.PI / 2;
+
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
@@ -58,13 +61,13 @@ function setupLines() {
     const positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setDrawRange(0, 0);
-    const material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+    const material = new THREE.LineBasicMaterial({ color: 0x6AD53C, linewidth: 2 });
     line = new THREE.Line(geometry, material);
     // line.layers.set(1)
     scene.add(line);
 }
 
-console.log("top", container.getBoundingClientRect());
+console.debug("top boundary", container.getBoundingClientRect());
 
 window.addEventListener('pointermove', (e) => {
     pointer.set((e.clientX / CANVAS_WIDTH) * 2 - 1, -((e.clientY - CANVAS_TOP) / CANVAS_HEIGHT) * 2 + 1);
@@ -95,20 +98,51 @@ window.addEventListener('click', (e) => {
     let min = undefined;
     let index = undefined;
     intersects.forEach((hit) => {
-        if (!min || min < _stars[hit.index].p) {
-            min = _stars[hit.index].p;
+        // todo we need to select the most nearest to the point instead of nearest
+        if (!min || min > _stars[hit.index].p) {
+            // min = _stars[hit.index].p;
             index = hit.index;
         }
-        console.debug("Click on", _stars[hit.index]);
+        console.log("Click on", _stars[hit.index]);
     })
     if (index) {
-        if (!_selected.find(e => e === index)) {
-            _selected.push(index);
-            addStar(index);
+        if (_drawMode) {
+            drawStarLine(index)
+        } else {
+            //
         }
+        // if (!_selected.find(e => e === index)) {
+        //     _selected.push(index);
+        //     addStar(index);
+        // }
     }
-
 })
+
+function drawStarLine(index) {
+    if (_selected.length > 0 && _selected[_selected.length - 1] === index) {
+        // click on the last star, remove it
+        _selected.splice(-1);
+    } else {
+        _selected.push(index);
+        let i = (_selected.length - 1) * 3;
+        const star = _stars[index];
+        const positions = line.geometry.attributes.position.array;
+        positions[i++] = star.x;
+        positions[i++] = star.y;
+        positions[i++] = star.z;
+        console.log("positions", positions)
+    }
+    drawConstellation();
+}
+
+function drawConstellation() {
+    if (_selected.length < 2) {
+        line.geometry.setDrawRange(0, 0);
+    } else {
+        line.geometry.setDrawRange(0, _selected.length);
+    }
+    line.geometry.attributes.position.needsUpdate = true;
+}
 
 
 function addStar(index) {
@@ -133,24 +167,24 @@ function addStar(index) {
 }
 
 
-document.getElementById("stars").addEventListener("click", centerOnSelection);
+// document.getElementById("stars").addEventListener("click", centerOnSelection);
 
-function centerOnSelection(event) {
-    event.stopPropagation();
-    const index = event.target.getAttribute("idx");
-    if (!index) return;
-    controls.target = new THREE.Vector3(_stars[index].x, _stars[index].y, _stars[index].z);
-    controls.update();
-}
+// function centerOnSelection(event) {
+//     event.stopPropagation();
+//     const index = event.target.getAttribute("idx");
+//     if (!index) return;
+//     controls.target = new THREE.Vector3(_stars[index].x, _stars[index].y, _stars[index].z);
+//     controls.update();
+// }
 
-document.getElementById("selection-reset").addEventListener("click", clearSelection);
+document.getElementById("draw-clear").addEventListener("click", clearSelection);
 
 function clearSelection(event) {
-    _selected = [];
-    document.getElementById("draw-constellation").disabled = true;
-    document.getElementById('stars').textContent = 'Click on star to add to selection';
     event.stopPropagation();
+    _selected = [];
+    drawConstellation();
 }
+
 
 document.getElementById("camera-reset").addEventListener("click", resetCamera);
 
@@ -225,38 +259,40 @@ function onDocumentMouseWheel(event) {
 // }
 
 
-document.getElementById("draw-constellation").addEventListener("click", drawConstellation);
+document.getElementById("draw-constellation").addEventListener("click", switchDrawConstellation);
 
-function drawConstellation(event) {
+function switchDrawConstellation(event) {
     camera.layers.enable(1);
     event.stopPropagation();
-    if (_selected.length < 3) {
-        console.debug("Not enough lines to draw constellation")
+    _drawMode = !_drawMode;
+    if (_drawMode) {
+        document.getElementById("draw-constellation").innerText = "Stop drawing"
+    } else {
+        document.getElementById("draw-constellation").innerText = "Draw constellation"
     }
+    // if (_selected.length < 3) {
+    //     console.debug("Not enough lines to draw constellation")
+    // }
 
-    line.material.color.setHSL(Math.random(), 1, 0.5);
+    // line.material.color.setHSL(Math.random(), 1, 0.5);
 
 
-    const positions = line.geometry.attributes.position.array;
+    // const positions = line.geometry.attributes.position.array;
 
-    let index = 0;
+    // let index = 0;
 
-    for (let i = 0; i < _selected.length; i++) {
-        const star = _stars[_selected[i]];
-        positions[index++] = star.x;
-        positions[index++] = star.y;
-        positions[index++] = star.z;
-    }
-    const star = _stars[_selected[0]];
-    positions[index++] = star.x;
-    positions[index++] = star.y;
-    positions[index++] = star.z;
-    line.geometry.setDrawRange(0, _selected.length + 1);
-    line.geometry.attributes.position.needsUpdate = true;
-}
-
-function drawLine(next, first) {
-
+    // for (let i = 0; i < _selected.length; i++) {
+    //     const star = _stars[_selected[i]];
+    //     positions[index++] = star.x;
+    //     positions[index++] = star.y;
+    //     positions[index++] = star.z;
+    // }
+    // const star = _stars[_selected[0]];
+    // positions[index++] = star.x;
+    // positions[index++] = star.y;
+    // positions[index++] = star.z;
+    // line.geometry.setDrawRange(0, _selected.length + 1);
+    // line.geometry.attributes.position.needsUpdate = true;
 }
 
 function render() {
@@ -296,8 +332,6 @@ function parseStarNames(json) {
 
 function filterStars(json) {
 
-    console.log("starnames", _starnames)
-
     const validStars = [];
     for (let i = 0; i < json.length; i++) {
         const star = json[i];
@@ -333,7 +367,7 @@ function renderStars(stars) {
 
         // bookm
         if (!star.K) {
-            console.warn(star.n, 'has invalid colour; setting generic placeholder. Dump:', star);
+            // console.warn(star.n, 'has invalid colour; setting generic placeholder. Dump:', star);
             // 6400 K colour, medium white.
             star.K = { r: 1, g: 0.9357, b: 0.9396 };
         }
