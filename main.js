@@ -97,6 +97,7 @@ window.addEventListener('pointermove', (e) => {
 window.addEventListener('click', (e) => {
     let min = undefined;
     let index = undefined;
+    e.stopPropagation();
     intersects.forEach((hit) => {
         // todo we need to select the most nearest to the point instead of nearest
         if (!min || min > _stars[hit.index].p) {
@@ -109,7 +110,7 @@ window.addEventListener('click', (e) => {
         if (_drawMode) {
             drawStarLine(index)
         } else {
-            //
+            showStarInfo(index);
         }
         // if (!_selected.find(e => e === index)) {
         //     _selected.push(index);
@@ -145,37 +146,38 @@ function drawConstellation() {
 }
 
 
-function addStar(index) {
-    if (_selected.length < 3) {
-        document.getElementById("draw-constellation").disabled = true;
-    } else {
-        document.getElementById("draw-constellation").disabled = false;
-    }
-    const parent = document.getElementById('stars');
-    if (_selected.length == 1) {
-        parent.innerText = '';
-    }
-
-    const star_element = document.createElement("span");
+function showStarInfo(index) {
+    document.getElementById("center-on-star").hidden = false;
+    document.getElementById("center-on-star").setAttribute("idx", index);
+    const info = document.getElementById("info-tip");
+    info.innerText = "";
     const star = _stars[index];
     const star_name = _starnames[star.n];
-    star_element.innerText = star_name ? star_name.name : star.n;
-    star_element.className = 'star';
-    star_element.setAttribute("idx", index);
-    star_element.setAttribute("title", "Click to center view on star");
-    parent.appendChild(star_element);
+    let text = '';
+    if (star_name) {
+        text = `${star_name.name} (${star_name.constellation} ${star.n}) ${star_name.origin} `
+    } else {
+        text = `${star.n} `
+    }
+    info.appendChild(document.createTextNode(text));
+    const anchor = document.createElement("a");
+    anchor.innerText = "view on Simbad"
+    anchor.setAttribute("href", `https://simbad.u-strasbg.fr/simbad/sim-id?Ident=${star.n}`)
+    anchor.setAttribute("target", "_blank");
+    info.appendChild(anchor);
+
 }
 
 
-// document.getElementById("stars").addEventListener("click", centerOnSelection);
+document.getElementById("center-on-star").addEventListener("click", centerOnSelection);
 
-// function centerOnSelection(event) {
-//     event.stopPropagation();
-//     const index = event.target.getAttribute("idx");
-//     if (!index) return;
-//     controls.target = new THREE.Vector3(_stars[index].x, _stars[index].y, _stars[index].z);
-//     controls.update();
-// }
+function centerOnSelection(event) {
+    event.stopPropagation();
+    const index = event.target.getAttribute("idx");
+    if (!index) return;
+    controls.target = new THREE.Vector3(_stars[index].x, _stars[index].y, _stars[index].z);
+    controls.update();
+}
 
 document.getElementById("draw-clear").addEventListener("click", clearSelection);
 
@@ -418,3 +420,9 @@ configureZoomButtons();
 loadStarNames();
 
 loadStars();
+
+document.getElementById("top").addEventListener("click", topClick);
+
+function topClick(event) {
+    event.stopPropagation();
+}
