@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import starfieldBlackbody from "./starfieldBlackbody.glsl.js";
 
-const NEAR = 0.000001, FAR = 1e27, CUBE_ASPECT = 1, FOV = 50, FOV_MAX = 100, FOV_MIN = 25, MAX_POINTS = 500;
+const NEAR = 0.000001, FAR = 1e27, CUBE_ASPECT = 1, FOV = 50, FOV_MAX = 50, FOV_MIN = 17.4, MAX_POINTS = 500;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
@@ -20,6 +20,7 @@ let hovered = {}
 let _stars = []
 let _starnames = {}
 let _selected = [];
+let _zoom = 1;
 
 let line;
 
@@ -201,7 +202,7 @@ document.getElementById("camera-zoom-in").addEventListener("click", zoomIn);
 
 function zoomIn(event) {
     event.stopPropagation();
-    if (camera.fov == FOV_MIN) {
+    if (camera.fov <= FOV_MIN) {
         return;
     }
     camera.fov--;
@@ -213,7 +214,7 @@ document.getElementById("camera-zoom-out").addEventListener("click", zoomOut);
 
 function zoomOut(event) {
     event.stopPropagation();
-    if (camera.fov == FOV_MAX) {
+    if (camera.fov >= FOV_MAX) {
         return;
     }
     camera.fov++;
@@ -425,4 +426,12 @@ document.getElementById("top").addEventListener("click", topClick);
 
 function topClick(event) {
     event.stopPropagation();
+}
+
+function applyZoom() {
+    const fov_new = calculateFOVNew(FOV, _zoom);
+    console.log(fov_new);
+    camera.fov = fov_new;
+    camera.updateProjectionMatrix();
+    configureZoomButtons();
 }
