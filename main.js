@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import starfieldBlackbody from "./starfieldBlackbody.glsl.js";
 
+const urlParams = new URLSearchParams(window.location.search);
+const _set = (urlParams.get('set') || "earth_bsc5p_3d_min") + ".json";
+
+
 const NEAR = 0.000001, FAR = 1e27, CUBE_ASPECT = 1, FOV = 50, FOV_MAX = 50, FOV_MIN = 17.4, MAX_POINTS = 500;
 
 const scene = new THREE.Scene();
@@ -308,8 +312,14 @@ function render() {
 const spectralCombinations = {};
 
 function loadStars() {
-    fetch("bsc5p_3d_min.json")
-        .then(response => response.json())
+    fetch(_set)
+        .then(response => {
+            if (!response.ok) {
+                console.error(`Cannot load set ${_set}: ${response.status}: ${response.statusText}`);
+                throw new Error('Request error');
+            }
+            return response.json();
+        })
         .then(json => filterStars(json))
         .then(stars => renderStars(stars));
 }
@@ -430,7 +440,6 @@ function topClick(event) {
 
 function applyZoom() {
     const fov_new = calculateFOVNew(FOV, _zoom);
-    console.log(fov_new);
     camera.fov = fov_new;
     camera.updateProjectionMatrix();
     configureZoomButtons();

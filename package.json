@@ -1,9 +1,10 @@
 {
   "dependencies": {
+    "@frostoven/alkalurops": "^1.28.5",
     "three": "^0.169.0"
   },
   "devDependencies": {
     "vite": "^5.4.8"
-  }
-  
+  },
+  "type": "module"
 }
