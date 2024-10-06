@@ -11,6 +11,8 @@ for (let i = 0; i < data.length; i++) {
     new_row['n'] = id[2]
     new_row['s'] = `${id[0]} ${id[1]}`
     new_row['p'] = row['p']
+
+
     const { x, y, z } = project3d({
         rightAscension: row['additional_data']['ra'],
         declination: row['additional_data']['dec'],
@@ -25,12 +27,4 @@ for (let i = 0; i < data.length; i++) {
     result.push(new_row);
 
 }
-// FS.open('test_recalculated.json')
-const { x, y, z } = project3d({
-    rightAscension: 1.7677943505456013,
-    declination: -0.291751259921236,
-    distance: 2.637061258933045,
-});
-
-
-FS.writeFileSync('sweeps-4-min.json', JSON.stringify(result));
+FS.writeFileSync('alpha-cent-b-min.json', JSON.stringify(result));
